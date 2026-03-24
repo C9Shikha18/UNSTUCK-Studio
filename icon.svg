@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0a0a0a"/>
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#FFE500" stroke-width="28"/>
+  <circle cx="256" cy="256" r="40" fill="#FFE500"/>
+  <text x="256" y="480" font-family="Arial Black" font-size="64" fill="#F4EFE6" text-anchor="middle" font-weight="900">UNSTUCK</text>
+</svg>

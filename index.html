@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="apple-mobile-web-app-title" content="UNSTUCK"/>
+  <meta name="theme-color" content="#0a0a0a"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>UNSTUCK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;background:#ebebeb;font-family:'Anton',Impact,sans-serif;color:#0a0a0a;overscroll-behavior:none;}
+    ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+    .fu{animation:fadeUp 0.35s ease forwards;opacity:0;}
+    .mood-card{cursor:pointer;border:2.5px solid #0a0a0a;padding:13px 15px;transition:all 0.1s;background:#fff;user-select:none;}
+    .mood-card:active{transform:translate(-2px,-2px);box-shadow:4px 4px 0 #0a0a0a;}
+    .mood-card.selected{box-shadow:5px 5px 0 #0a0a0a;transform:translate(-3px,-3px);background:#0a0a0a;}
+    .int-card{cursor:pointer;border:2.5px solid #0a0a0a;padding:12px 10px;transition:all 0.1s;background:#fff;text-align:center;user-select:none;}
+    .int-card.selected,.int-card:active{background:#0a0a0a;color:#f0f0f4;}
+    .btn{cursor:pointer;border:2.5px solid #0a0a0a;font-family:'Anton',sans-serif;transition:all 0.12s;letter-spacing:0.04em;user-select:none;}
+    .btn:active{transform:translate(2px,2px);}
+    .btn:disabled{opacity:0.35;pointer-events:none;}
+    .tab{cursor:pointer;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;border:none;transition:all 0.15s;background:transparent;color:#555;}
+    .tab.on{background:#12121a;color:#8B5CF6;}
+    textarea{resize:none;outline:none;font-family:'DM Sans',sans-serif;}
+    textarea::placeholder{color:#bbb;}
+    .row{border-bottom:1px solid #e5e0d8;padding:12px 0;}
+    #app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:480px;margin:0 auto;}
+    #nav{background:#12121a;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;padding-top:env(safe-area-inset-top);}
+    #scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    #tabs{background:#12121a;display:flex;border-top:1px solid #222;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+    #tabs .tab{flex:1;text-align:center;padding:12px 0;}
+    .ticker-wrap{overflow:hidden;border-top:2px solid #0a0a0a;border-bottom:2px solid #0a0a0a;background:#8B5CF6;}
+    .ticker{display:flex;animation:marquee 22s linear infinite;white-space:nowrap;}
+    .bar-label{font-family:'DM Sans',sans-serif;font-size:9px;text-align:center;margin-top:3px;color:#aaa;}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="nav">
+    <div style="display:flex;align-items:center;gap:10px;padding:13px 0;">
+      <span style="font-size:20px;color:#8B5CF6;">◎</span>
+      <span style="font-size:18px;color:#f0f0f4;letter-spacing:0.05em;">UNSTUCK</span>
+    </div>
+    <div id="streak-badge" style="display:none;background:#8B5CF6;padding:4px 10px;display:flex;align-items:center;gap:5px;">
+      <span style="font-size:13px;">🔥</span>
+      <span id="streak-num" style="font-size:13px;font-family:'Anton';color:#0a0a0a;">0</span>
+    </div>
+    <div id="tab-btns" style="display:flex;gap:2px;">
+      <button class="tab on" data-tab="home">TODAY</button>
+      <button class="tab" data-tab="log">LOG</button>
+      <button class="tab" data-tab="stats">STATS</button>
+    </div>
+  </div>
+
+  <div id="scroll">
+    <!-- HOME TAB -->
+    <div id="tab-home" style="padding:20px 16px 80px;">
+
+      <!-- Status card -->
+      <div id="status-card" style="border:2.5px solid #0a0a0a;padding:16px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;background:#8B5CF6;">
+        <div>
+          <div id="status-label" style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#0a0a0a;margin-bottom:4px;">DAILY CHECK-IN</div>
+          <div id="status-msg" style="font-size:26px;color:#0a0a0a;">What's going on?</div>
+        </div>
+        <div style="text-align:right;">
+          <div id="streak-big" style="font-size:42px;line-height:1;color:#0a0a0a;">0</div>
+          <div style="font-family:'DM Sans';font-size:10px;color:#555;letter-spacing:0.1em;">STREAK</div>
+        </div>
+      </div>
+
+      <!-- SCREEN: PICK -->
+      <div id="screen-pick">
+        <!-- Ticker -->
+        <div class="ticker-wrap" style="margin-bottom:18px;">
+          <div class="ticker" style="padding:7px 0;">
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">NOT BROKEN ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">JUST STUCK ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">THERE'S A DIFFERENCE ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">PICK YOUR STATE ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">DO THE THING ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">NOT BROKEN ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">JUST STUCK ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">THERE'S A DIFFERENCE ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">PICK YOUR STATE ✦</span>
+            <span style="font-family:'Anton';font-size:11px;letter-spacing:0.12em;padding:0 20px;color:#0a0a0a;">DO THE THING ✦</span>
+          </div>
+        </div>
+
+        <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:12px;">SELECT YOUR STATE</div>
+
+        <div id="mood-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;"></div>
+
+        <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:10px;">HOW LONG?</div>
+        <div id="int-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;"></div>
+
+        <button id="go-btn" class="btn" disabled style="width:100%;background:#e5e0d8;padding:16px;font-size:20px;color:#0a0a0a;border:2.5px solid #ccc;">PICK A STATE FIRST</button>
+      </div>
+
+      <!-- SCREEN: RESULT -->
+      <div id="screen-result" style="display:none;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px;">
+          <div id="res-mood-badge" style="padding:4px 14px;border:2px solid #0a0a0a;font-size:13px;font-family:'Anton';letter-spacing:0.08em;"></div>
+          <div id="res-int-badge" style="background:#12121a;color:#8B5CF6;padding:4px 12px;border:2px solid #0a0a0a;font-size:11px;font-family:'DM Sans';font-weight:700;letter-spacing:0.1em;"></div>
+          <div id="res-cat-badge" style="padding:4px 12px;border:2px solid;font-size:11px;font-family:'DM Sans';font-weight:700;letter-spacing:0.1em;"></div>
+          <button onclick="showPick()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;font-family:'DM Sans';font-size:11px;color:#aaa;">← BACK</button>
+        </div>
+
+        <div style="background:#fff;border:2.5px solid #0a0a0a;padding:20px;position:relative;">
+          <div style="position:absolute;top:-11px;left:14px;background:#8B5CF6;border:2px solid #0a0a0a;padding:2px 10px;font-size:10px;font-family:'DM Sans';font-weight:700;letter-spacing:0.12em;">HONEST TAKE</div>
+          <p id="res-reframe" style="font-family:'DM Sans';font-size:14px;font-weight:500;line-height:1.65;color:#0a0a0a;margin-top:6px;"></p>
+        </div>
+
+        <div style="background:#0a0a0a;padding:12px 18px;display:flex;gap:16px;align-items:center;">
+          <span style="font-size:10px;font-family:'DM Sans';font-weight:700;color:#555;letter-spacing:0.15em;flex-shrink:0;">MANTRA</span>
+          <span id="res-mantra" style="font-size:20px;color:#8B5CF6;letter-spacing:0.04em;"></span>
+        </div>
+
+        <div style="border:2.5px solid #0a0a0a;padding:20px;position:relative;background:#ebebeb;">
+          <div id="res-challenge-label" style="position:absolute;top:-11px;left:14px;background:#0a0a0a;border:2px solid #0a0a0a;padding:2px 10px;font-size:10px;font-family:'DM Sans';font-weight:700;letter-spacing:0.12em;color:#8B5CF6;"></div>
+          <p id="res-challenge" style="font-family:'DM Sans';font-size:14px;font-weight:600;line-height:1.6;color:#0a0a0a;margin-top:6px;"></p>
+          <div id="res-firststep" style="margin-top:12px;background:#8B5CF6;border:1.5px solid #0a0a0a;padding:10px 14px;"></div>
+          <div id="res-why" style="margin-top:10px;border-top:1px dashed #ccc;padding-top:10px;font-family:'DM Sans';font-size:11px;color:#888;line-height:1.5;"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button id="start-btn" class="btn" style="flex:2;background:#8B5CF6;padding:16px;font-size:18px;color:#0a0a0a;">START SPRINT →</button>
+          <button onclick="newChallenge()" class="btn" style="flex:1;background:transparent;padding:16px;font-size:12px;color:#0a0a0a;font-family:'DM Sans';font-weight:700;">NEW ONE</button>
+        </div>
+      </div>
+
+      <!-- SCREEN: SPRINT -->
+      <div id="screen-sprint" style="display:none;flex-direction:column;gap:14px;">
+        <div style="background:#0a0a0a;border:2.5px solid #0a0a0a;padding:28px 20px;text-align:center;">
+          <div style="font-family:'DM Sans';font-size:10px;color:#555;letter-spacing:0.2em;margin-bottom:6px;">TIME REMAINING</div>
+          <div id="timer-display" style="font-size:76px;line-height:1;color:#8B5CF6;transition:color 0.5s;">00:00</div>
+          <div style="height:3px;background:#222;margin-top:18px;">
+            <div id="timer-bar" style="height:100%;width:0%;background:#8B5CF6;transition:width 1s linear;"></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;">
+            <button id="pause-btn" class="btn" onclick="togglePause()" style="background:#8B5CF6;padding:10px 22px;font-size:14px;color:#0a0a0a;">PAUSE</button>
+            <button class="btn" onclick="quitSprint()" style="background:transparent;padding:10px 16px;font-size:11px;color:#888;font-family:'DM Sans';font-weight:700;border-color:#444;">QUIT</button>
+            <button class="btn" onclick="finishEarly()" style="background:transparent;padding:10px 16px;font-size:11px;color:#00BCD4;font-family:'DM Sans';font-weight:700;border-color:#00BCD4;">DONE EARLY ✓</button>
+          </div>
+        </div>
+
+        <div style="border:2px dashed #0a0a0a;padding:14px 16px;background:#fff;">
+          <div style="font-family:'DM Sans';font-size:10px;color:#888;letter-spacing:0.12em;margin-bottom:6px;">YOUR CHALLENGE</div>
+          <div id="sprint-challenge" style="font-family:'DM Sans';font-size:14px;font-weight:600;color:#0a0a0a;line-height:1.5;"></div>
+          <div id="sprint-firststep" style="margin-top:8px;font-family:'DM Sans';font-size:11px;color:#8B5CF6;background:#0a0a0a;padding:6px 10px;display:none;"></div>
+        </div>
+
+        <div>
+          <div style="font-family:'DM Sans';font-size:10px;color:#888;letter-spacing:0.12em;margin-bottom:6px;">SCRATCH PAD</div>
+          <textarea id="sprint-note" placeholder="jot things here as you go..." style="width:100%;height:90px;border:2px solid #ccc;background:#ebebeb;padding:12px;font-size:13px;color:#0a0a0a;line-height:1.5;"></textarea>
+        </div>
+      </div>
+
+      <!-- SCREEN: DONE -->
+      <div id="screen-done" style="display:none;flex-direction:column;gap:14px;">
+        <div style="background:#0a0a0a;border:2.5px solid #0a0a0a;padding:32px 20px;text-align:center;">
+          <div style="font-size:60px;line-height:0.95;color:#f0f0f4;letter-spacing:-0.01em;">SPRINT<br/>DONE.</div>
+          <div id="done-stats" style="font-family:'DM Sans';font-size:13px;color:#8B5CF6;margin-top:12px;letter-spacing:0.1em;"></div>
+        </div>
+
+        <div id="done-note-card" style="display:none;border:2px solid #ccc;padding:16px;background:#fff;">
+          <div style="font-family:'DM Sans';font-size:10px;color:#aaa;letter-spacing:0.12em;margin-bottom:8px;">WHAT YOU MADE</div>
+          <div id="done-note-text" style="font-family:'DM Sans';font-size:13px;color:#0a0a0a;line-height:1.6;white-space:pre-wrap;font-style:italic;"></div>
+        </div>
+
+        <div style="border:2px solid #e5e0d8;padding:14px 16px;background:#fff;font-family:'DM Sans';">
+          <div style="font-size:10px;color:#888;letter-spacing:0.12em;margin-bottom:6px;">BUILD THE HABIT</div>
+          <div style="font-size:13px;color:#0a0a0a;font-weight:500;line-height:1.5;">Come back tomorrow at the same time. One sprint a day is all it takes.</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn" onclick="resetToHome()" style="width:100%;background:#8B5CF6;padding:16px;font-size:20px;color:#0a0a0a;">GO AGAIN →</button>
+          <button class="btn" onclick="switchTab('log')" style="width:100%;background:transparent;padding:12px;font-size:12px;color:#888;font-family:'DM Sans';font-weight:700;border-color:#ccc;">VIEW YOUR LOG</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG TAB -->
+    <div id="tab-log" style="display:none;padding:20px 16px 80px;">
+      <div style="font-size:40px;letter-spacing:-0.01em;margin-bottom:6px;">SPRINT LOG</div>
+      <div id="log-subtitle" style="font-family:'DM Sans';font-size:12px;color:#888;margin-bottom:20px;"></div>
+      <div id="log-content"></div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div id="tab-stats" style="display:none;padding:20px 16px 80px;">
+      <div style="font-size:40px;letter-spacing:-0.01em;margin-bottom:20px;">YOUR STATS</div>
+      <div id="stats-content"></div>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab on" data-tab="home" onclick="switchTab('home')">TODAY</button>
+    <button class="tab" data-tab="log" onclick="switchTab('log')">LOG</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">STATS</button>
+  </div>
+</div>
+
+<script>
+// ─── CHALLENGE LIBRARY ──────────────────────────────────────────────────────
+const LIBRARY = {
+  numb: {
+    reframe: "Numb isn't bad — it's your brain protecting you from overload. The feeling will return. Right now just do something tiny and physical.",
+    mantra: "Move first, feel later.",
+    quick: [
+      { challenge:"Write down 3 things you can physically touch right now. Describe each one in exactly 4 words.", why:"Grounds attention in sensory reality, bypasses the mental fog.", first:"Reach out and touch the closest object." },
+      { challenge:"Stand up. Take 10 slow, deep breaths while looking out the window or at a blank wall.", why:"Breathing reactivates the parasympathetic system and breaks the flatline.", first:"Stand up right now." },
+      { challenge:"Pick a random object near you. Spend 2 minutes drawing it — badly is fine.", why:"Drawing forces active observation and kicks the brain back on.", first:"Grab any pen and a piece of paper or the back of a receipt." },
+    ],
+    standard: [
+      { challenge:"Write a 'state of the union' for your brain right now. 3 paragraphs: what's happening, what's missing, what you actually want.", why:"Naming the numb state gives the brain something to grab onto.", first:"Write 'My brain right now is...' and keep going without stopping." },
+      { challenge:"Make a playlist of 5 songs that feel like how you actually feel — not how you want to feel. Title it honestly.", why:"Matching your mood instead of fighting it reduces internal friction.", first:"Think of one song that fits. Start there." },
+      { challenge:"Find one photo on your phone from the last month that has a story. Write that story in 150 words.", why:"Memory retrieval activates emotional engagement without pressure.", first:"Open your camera roll and scroll for 30 seconds." },
+    ],
+    deep: [
+      { challenge:"Write a letter to your past self from 2 years ago. Be honest — what have you actually learned?", why:"Reflection activates meaning-making and reconnects you with progress you've forgotten.", first:"Write 'Two years ago you...' and keep going." },
+      { challenge:"Design your ideal Tuesday. Not a fantasy — an actually achievable version of a great ordinary day. Be specific about every hour.", why:"Concrete visioning activates motivation by making abstract wants tangible.", first:"Write '7am:' and fill it in." },
+      { challenge:"Take a 10-minute walk. No phone. Notice 5 things you've never consciously noticed before on a familiar route.", why:"Novelty-seeking re-engages dopamine circuits dulled by routine.", first:"Put on shoes and walk out the door." },
+    ]
+  },
+  spinning: {
+    reframe: "You're not overwhelmed because you're weak. You're overwhelmed because you care about too many things at once and haven't chosen what matters most right now.",
+    mantra: "One thing. Then the next.",
+    quick: [
+      { challenge:"Write every single thing on your mind — no filter, 2 minutes. Then circle ONE thing. Only that thing exists for now.", why:"Brain dumps reduce cognitive load by externalizing working memory.", first:"Write 'RIGHT NOW I'M THINKING ABOUT:' and don't stop." },
+      { challenge:"Set a timer for 90 seconds and do nothing. Sit. Don't check your phone. Just exist.", why:"Forced stillness breaks the anxiety feedback loop.", first:"Put your phone face-down. Set a separate timer." },
+      { challenge:"Name the #1 thing causing your spinning feeling right now. Write it as one clear sentence.", why:"Clarity reduces anxiety more than action does.", first:"Start with 'The real thing is...'" },
+    ],
+    standard: [
+      { challenge:"List everything on your plate. Now put each item into one of three columns: URGENT NOW / CAN WAIT / DOESN'T ACTUALLY MATTER.", why:"Eisenhower-style sorting moves you from feeling to deciding.", first:"Draw three columns on paper." },
+      { challenge:"Write an email or message you've been putting off. Send it now. Done.", why:"Incompletions drain energy constantly. Completion gives it back.", first:"Open the message thread." },
+      { challenge:"Do a 5-minute 'shutdown ritual': write tomorrow's top 3 priorities, close your tabs, say out loud 'Today is done.'", why:"Boundaries between work and rest require deliberate actions to work.", first:"Open a fresh note or piece of paper." },
+    ],
+    deep: [
+      { challenge:"Map every obligation in your life right now. Circle ones that are truly yours vs ones you absorbed from others' expectations.", why:"Separating self-imposed from externally-imposed pressure reveals where actual choice exists.", first:"Write 'Things I'm responsible for right now:' and list without filtering." },
+      { challenge:"Write a 'not-to-do list' — 10 things you're doing that you actually want to stop. No judgment, just truth.", why:"Subtraction often creates more clarity than addition.", first:"Ask yourself: what am I doing out of habit, guilt, or fear?" },
+      { challenge:"Take 10 minutes to do absolutely nothing productive. Sit outside, lie on the floor, stare at the ceiling. No content, no tasks.", why:"Rest isn't a reward — it's when the brain consolidates and regenerates.", first:"Find a flat surface and lie down." },
+    ]
+  },
+  blocked: {
+    reframe: "You're not blocked because you're uncreative. You're blocked because you're waiting for permission to make something imperfect. The permission is: right now, this thing can be garbage.",
+    mantra: "Bad first drafts exist.",
+    quick: [
+      { challenge:"Write the worst possible version of whatever you're trying to create. Make it deliberately terrible.", why:"Permission to fail removes the perfectionism block instantly.", first:"Write 'TERRIBLE VERSION:' at the top of a blank page." },
+      { challenge:"Set a 2-minute timer. Scribble whatever comes out — don't lift the pen, don't edit, don't think.", why:"Automatic mark-making bypasses the inner critic.", first:"Get something to write with and start the timer." },
+      { challenge:"Think of the creative thing you're stuck on. Write 5 completely wrong, stupid, or ridiculous ways to approach it.", why:"Wrong answers loosen the grip of 'right answer' anxiety.", first:"Write 'TERRIBLE IDEAS FOR THIS:'" },
+    ],
+    standard: [
+      { challenge:"Write the opening of something — a story, a post, a song, a pitch — in 5 completely different tones. Pick the one that surprises you.", why:"Forced variation breaks fixation on one 'correct' approach.", first:"Write version 1 in the most boring, flat voice possible." },
+      { challenge:"Find a piece of work you admire. Analyze exactly how it works: structure, rhythm, what it includes, what it leaves out. Reverse-engineer it.", why:"Technical analysis shifts from intimidation to understanding.", first:"Pick one specific thing you genuinely admire." },
+      { challenge:"Create something using only constraints: write a story in 6 words, or draw using only circles, or explain your idea in emoji only.", why:"Constraints remove infinite choice, which is often what causes the block.", first:"Pick a constraint. Any of them." },
+    ],
+    deep: [
+      { challenge:"Write freely for 10 minutes about why this particular project feels hard. Not the project — why this one is difficult for you right now.", why:"Creative blocks are often emotional, not technical. Naming the real barrier clears it.", first:"Write 'The reason this one is hard is...'" },
+      { challenge:"Make a 'creative inventory': list 20 things you've made, done, or created in the last 2 years (small counts). Notice what patterns emerge.", why:"Evidence of past output rewires the 'I'm not creative' story.", first:"Start as far back as 2 years and list forward." },
+      { challenge:"Choose your stuck project. For 10 minutes, only work on the piece you find most interesting — skip everything else.", why:"Doing the fun part first builds momentum that carries into harder parts.", first:"Identify: what's the one piece of this you'd actually enjoy doing?" },
+    ]
+  },
+  flat: {
+    reframe: "Flat is usually what happens after you've been pushing for a while. It's not emptiness — it's a recovery mode. You probably need less input and more output right now.",
+    mantra: "Low tide is still tide.",
+    quick: [
+      { challenge:"Make something small that will only take 90 seconds. Draw a face, fold a piece of paper into something, hum a melody and record it.", why:"Small completions rebuild momentum when big ones feel impossible.", first:"Pick the first idea that came to mind. Do that one." },
+      { challenge:"Go outside for 2 minutes. No destination. Just change the environment you're in.", why:"Context change interrupts flat mood more effectively than willpower.", first:"Stand up and walk to the door." },
+      { challenge:"Write down one small thing you're proud of from the last 7 days. Just one, real, specific thing.", why:"Intentional recall of wins interrupts negativity bias.", first:"Think of last week. What went even slightly right?" },
+    ],
+    standard: [
+      { challenge:"Cook or make something with your hands. Even instant noodles. The physicality of making food engages you differently than screen time.", why:"Tactile, multi-sensory activity reactivates engagement more than passive consumption.", first:"Go to the kitchen and find one thing to make." },
+      { challenge:"Write a 'what I actually like' list — not what you think you should like. Be honest. 20 items minimum.", why:"Reconnecting with genuine preferences re-establishes personal identity against flatness.", first:"Start with the last thing you genuinely enjoyed — even if small." },
+      { challenge:"Listen to one full album you haven't heard before, front to back, doing nothing else.", why:"Complete aesthetic immersion is a form of active rest.", first:"Pick a genre you're curious about and find one album." },
+    ],
+    deep: [
+      { challenge:"Write about a time you felt the opposite of flat. Describe it in full sensory detail — where were you, what time of day, who was there, what you were doing.", why:"Episodic memory retrieval of peak states activates associated neural pathways.", first:"Think of a time you felt most alive. Any time." },
+      { challenge:"Redesign your next 3 days. Not productivity — energy. Map what drains and what fills you, then rearrange with that as the filter.", why:"Energy design is more sustainable than time management.", first:"Draw a simple grid: 3 days × morning/afternoon/evening." },
+      { challenge:"Do something physical for 10 minutes that you'd never normally do — dance badly, do cartwheels, crawl around, move weirdly. No audience needed.", why:"Novel movement activates arousal systems and generates genuine mood change.", first:"Close the door. Then just start moving." },
+    ]
+  },
+  anxious: {
+    reframe: "Anxiety is your brain treating a thought as a physical threat. The body doesn't know the difference — but you can teach it. The feeling is real; the danger usually isn't.",
+    mantra: "Feeling isn't fact.",
+    quick: [
+      { challenge:"Do box breathing: in for 4, hold for 4, out for 4, hold for 4. Repeat 5 times. Count out loud.", why:"Controlled breathing directly activates the vagal brake and calms the nervous system.", first:"Sit up straight and breathe in for 4 counts now." },
+      { challenge:"Write down the exact thought causing your anxiety. Then write: 'The realistic probability of this happening is...' and actually estimate it.", why:"Probability reappraisal reduces catastrophizing by engaging the rational brain.", first:"Write the anxious thought exactly as it appears." },
+      { challenge:"Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste.", why:"Sensory grounding interrupts the abstract loop anxiety runs on.", first:"Look around and name the first thing you see." },
+    ],
+    standard: [
+      { challenge:"Write out your worst-case scenario for the thing you're anxious about. Then: what would you actually do if that happened? Write the plan.", why:"Facing the worst case directly removes its power more than avoiding it.", first:"Write 'Worst case: ...' and be honest." },
+      { challenge:"Identify what you can control about the anxiety-causing situation. Write it. Then write what you can't control and accept it's not yours to solve.", why:"The distinction between control and influence reduces overwhelm immediately.", first:"Draw two columns: CAN CONTROL / CAN'T CONTROL." },
+      { challenge:"Do 5 minutes of physical exercise — jumping jacks, push-ups, or a fast walk. Work up a sweat if possible.", why:"Exercise metabolizes the cortisol anxiety produces in the body.", first:"Stand up and start moving right now." },
+    ],
+    deep: [
+      { challenge:"Write your anxiety a letter. Ask it what it's actually protecting you from. Listen for the answer — it's usually trying to help.", why:"Giving anxiety a role (protector not enemy) reduces resistance and internal conflict.", first:"Write 'Dear Anxiety, what are you afraid of?'" },
+      { challenge:"Map your anxiety triggers for the last week. Look for patterns — times of day, specific people, specific topics. What does the pattern tell you?", why:"Pattern recognition moves anxiety from mysterious to manageable.", first:"Think back: when did you feel anxious this week?" },
+      { challenge:"Spend 10 minutes doing something completely absorbing with your hands — puzzle, sketch, cook, organize. No mental multitasking allowed.", why:"Manual absorption occupies the anxiety-generating parts of the brain.", first:"Find one physical task you can do right now." },
+    ]
+  },
+  restless: {
+    reframe: "Restlessness is creative energy that hasn't found its direction yet. It's not a problem to solve — it's fuel looking for an engine.",
+    mantra: "Channel it, don't kill it.",
+    quick: [
+      { challenge:"Give yourself 2 minutes to sprint-write every idea in your head — wild, stupid, real, impossible. No filtering.", why:"Idea dumps channel restless mental energy productively.", first:"Write 'BRAIN DUMP:' and don't stop for 2 minutes." },
+      { challenge:"Pick ONE thing you've been putting off for days. Set a 2-minute timer and start it. Just start — don't finish.", why:"Starting removes the looming feeling of the undone thing.", first:"Name the thing out loud, then begin." },
+      { challenge:"Do 20 jumping jacks right now. Or 10 push-ups. Move the physical restlessness through your body.", why:"Physical movement metabolizes restless nervous energy directly.", first:"Stand up immediately." },
+    ],
+    standard: [
+      { challenge:"Choose a project you've been thinking about but never started. Spend 5 minutes making it concrete: what is it, who is it for, what does done look like?", why:"Vagueness maintains restlessness. Specificity enables action.", first:"Name the project. Write it at the top of a page." },
+      { challenge:"Learn one specific thing you've been curious about. Find one good source. Read or watch it now with full attention.", why:"Satisfying curiosity with focus is more fulfilling than skimming 10 things.", first:"What have you been meaning to look into? Start there." },
+      { challenge:"Make a ranked list of your top 3 current interests. For #1 — what's one real thing you could do in the next week?", why:"Priority clarity converts vague restlessness into actionable direction.", first:"Write down your top interest, honestly." },
+    ],
+    deep: [
+      { challenge:"Design a side project you'd actually commit to. Name it, define the problem it solves, and describe what version 1 looks like in one page.", why:"Externalized structure gives restless energy a container.", first:"Write the project name at the top. Make it specific." },
+      { challenge:"Audit your current commitments. Which ones genuinely energize you? Which ones are you doing out of obligation? What does the gap tell you?", why:"Restlessness often signals misalignment between current actions and actual interests.", first:"List every regular commitment — work, personal, social." },
+      { challenge:"Pick a skill you want to build. Design a 30-day minimum viable practice — 15 minutes a day. Write the plan now.", why:"Converting restless desire into a system makes it real.", first:"Name the skill. Be specific." },
+    ]
+  },
+  scattered: {
+    reframe: "You haven't started nothing — you've started everything. Pick one thing to finish before starting the next. One complete thing is worth five abandoned ones.",
+    mantra: "Finish something small.",
+    quick: [
+      { challenge:"List everything you've started but not finished. Pick the one closest to done. Do just one thing that moves it forward.", why:"Near-completion is the highest leverage point for momentum.", first:"Write the list first. All of it." },
+      { challenge:"Set a 2-minute timer. Only one tab, one app, one thing. Close everything else.", why:"Reducing active choice removes decision fatigue that scatters focus.", first:"Close every other app or tab right now." },
+      { challenge:"Write your single most important task for today. Not a list — one thing. Commit to it.", why:"Single-tasking clarity reduces the anxiety of juggling too much.", first:"Think: if I could only complete one thing today, what matters most?" },
+    ],
+    standard: [
+      { challenge:"Do a 'context close' — formally end all open loops from this morning. Reply to messages, close tabs, write down what's undone. Clear the deck.", why:"Open loops consume attention even when you're not consciously working on them.", first:"Go through your notifications and messages first." },
+      { challenge:"Use a Pomodoro: 25 minutes, one task, no switching. Set the timer now. If your mind wanders, write the distraction down and return.", why:"Time-boxing with a written distraction log preserves focus without suppression.", first:"Name the one task. Set 25 minutes. Start." },
+      { challenge:"Recreate today's priorities from scratch. Forget the original list. What actually matters right now, given what you know now?", why:"Recalibration is more effective than forcing an outdated plan.", first:"Write today's date and ask: what would make today a success?" },
+    ],
+    deep: [
+      { challenge:"Audit why you got scattered today. Was it external (interruptions) or internal (avoidance)? Write an honest post-mortem with 3 specific changes for tomorrow.", why:"Reflection converts scattered days from failures into data.", first:"Write 'I got scattered because...' honestly." },
+      { challenge:"Design your ideal morning routine — one that prevents scattering before it starts. Be specific. Try it tomorrow.", why:"Front-loading structure prevents the entropy that causes scattered days.", first:"Write what time you want to start work and work backwards." },
+      { challenge:"Do a full brain dump of every open project, task, and nagging idea. Organize into: active / someday / kill. Be ruthless with the kill column.", why:"Externalizing all open loops frees working memory and reduces scatter.", first:"Write 'ACTIVE PROJECTS:' and list everything without filtering." },
+    ]
+  },
+  low: {
+    reframe: "Heavy and low is real. Don't fight it or perform being fine. The goal right now isn't to feel good — it's to do one small thing and not disappear into the heaviness.",
+    mantra: "One thing. That's enough.",
+    quick: [
+      { challenge:"Drink a full glass of water right now. Then go outside or open a window for exactly 2 minutes.", why:"Basic physical needs often amplify low mood when neglected.", first:"Get up and pour a glass of water." },
+      { challenge:"Text or message one person you care about. Something real — not a check-in, something actual.", why:"Low mood increases isolation; small connection interrupts the cycle.", first:"Think of one person. What would you actually want to say?" },
+      { challenge:"Write down what you're feeling right now in 3 honest sentences. Don't fix it — just say it.", why:"Labeling emotions reduces their intensity by activating the prefrontal cortex.", first:"Write 'Right now I feel...' and be truthful." },
+    ],
+    standard: [
+      { challenge:"Make a small, nourishing meal or snack — something you'd make for someone you love. Eat it slowly, away from a screen.", why:"Self-care acts signal to the brain that you're worth caring for, which interrupts low mood cycles.", first:"Go to the kitchen and see what's there." },
+      { challenge:"Put on one piece of music that matches exactly how you feel — not how you want to feel. Sit with it.", why:"Emotional validation through music is more effective than forced mood lifting.", first:"Think of one song that sounds like this feeling." },
+      { challenge:"Write a list of things that have helped when you've felt this way before. Be specific. Keep this list.", why:"Low mood impairs memory retrieval — writing it down makes the toolkit accessible.", first:"Think back: what has actually helped before, even a little?" },
+    ],
+    deep: [
+      { challenge:"Write a gentle, honest letter to yourself — the way you'd write to a close friend who was going through exactly this.", why:"Self-compassion reduces self-criticism, which amplifies low mood.", first:"Write 'Hey...' as if writing to a friend who is you." },
+      { challenge:"Identify what's been depleting you most this week — specifically. Then identify one thing you could stop, reduce, or ask for help with.", why:"Low mood often signals real depletion, not just mood. Addressing the source matters.", first:"Write 'What's draining me most right now is...'" },
+      { challenge:"Spend 10 minutes in nature — a park, a tree, outside the building. No phone. Look at things that are alive.", why:"Time in natural environments reduces cortisol and rumination significantly.", first:"Identify the closest outdoor space and go there." },
+    ]
+  }
+};
+
+const MOODS = [
+  {id:"numb",label:"NUMB",sub:"Going through motions.",color:"#9E9E9E",emoji:"○"},
+  {id:"spinning",label:"SPINNING",sub:"Brain won't stop.",color:"#FF4D00",emoji:"◉"},
+  {id:"blocked",label:"BLOCKED",sub:"Nothing comes out.",color:"#1a1aff",emoji:"◧"},
+  {id:"flat",label:"FLAT",sub:"No juice left.",color:"#888",emoji:"—"},
+  {id:"anxious",label:"ANXIOUS",sub:"Chest tight.",color:"#E040FB",emoji:"△"},
+  {id:"restless",label:"RESTLESS",sub:"Bored but can't start.",color:"#FF9800",emoji:"≋"},
+  {id:"scattered",label:"SCATTERED",sub:"Started 5, finished 0.",color:"#00BCD4",emoji:"⁂"},
+  {id:"low",label:"LOW",sub:"Just heavy.",color:"#607D8B",emoji:"▽"},
+];
+const INTENSITIES = [
+  {id:"quick",label:"QUICK",time:120,desc:"2 min"},
+  {id:"standard",label:"STANDARD",time:300,desc:"5 min"},
+  {id:"deep",label:"DEEP",time:600,desc:"10 min"},
+];
+const CAT_COLOR={visual:"#1a1aff",writing:"#FF4D00",physical:"#00BCD4",audio:"#E040FB",thinking:"#FF9800"};
+const CAT_ICON={visual:"✏",writing:"✍",physical:"◎",audio:"♪",thinking:"◈"};
+const DAY_LABELS=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let state = {
+  mood: null, intensity: INTENSITIES[1], result: null,
+  streak: 0, lastDate: null, totalSprints: 0, history: [],
+  timerInterval: null, timeLeft: 300, timerPaused: false,
+};
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function fmtTime(s) { return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+function save() { try { localStorage.setItem("unstuck",JSON.stringify({streak:state.streak,lastDate:state.lastDate,totalSprints:state.totalSprints,history:state.history})); } catch(e){} }
+function load() { try { const d=JSON.parse(localStorage.getItem("unstuck")||"{}"); state.streak=d.streak||0; state.lastDate=d.lastDate||null; state.totalSprints=d.totalSprints||0; state.history=d.history||[]; } catch(e){} }
+
+// ─── SOUND ENGINE (Web Audio API — 100% offline, no files needed) ─────────────
+const SFX = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  // Core: play a tone with envelope
+  function tone(freq, type, startVol, endVol, duration, startTime) {
+    const c = getCtx();
+    const t = startTime ?? c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.connect(gain); gain.connect(c.destination);
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(startVol, t);
+    gain.gain.linearRampToValueAtTime(endVol, t + duration);
+    osc.start(t); osc.stop(t + duration + 0.01);
+  }
+
+  // Frequency glide
+  function glide(f1, f2, type, vol, duration, startTime) {
+    const c = getCtx();
+    const t = startTime ?? c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.connect(gain); gain.connect(c.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(f1, t);
+    osc.frequency.linearRampToValueAtTime(f2, t + duration);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.linearRampToValueAtTime(0, t + duration);
+    osc.start(t); osc.stop(t + duration + 0.01);
+  }
+
+  return {
+    // Soft tap — every generic click
+    click() {
+      glide(320, 180, "sine", 0.18, 0.08);
+    },
+
+    // Mood card selected — warmer, slightly richer
+    moodSelect() {
+      const c = getCtx(); const now = c.currentTime;
+      tone(440, "sine", 0.15, 0, 0.12, now);
+      tone(554, "sine", 0.08, 0, 0.10, now + 0.03);
+    },
+
+    // Intensity card picked — short blip
+    intSelect() {
+      glide(500, 600, "sine", 0.12, 0.07);
+    },
+
+    // "Get my challenge" confirm — upward sweep, energetic
+    confirm() {
+      const c = getCtx(); const now = c.currentTime;
+      glide(220, 440, "sine", 0.2, 0.12, now);
+      glide(330, 660, "sine", 0.1, 0.08, now + 0.06);
+    },
+
+    // Sprint starts — three punchy ascending notes
+    sprintStart() {
+      const c = getCtx(); const now = c.currentTime;
+      tone(330, "square", 0.12, 0, 0.08, now);
+      tone(440, "square", 0.12, 0, 0.08, now + 0.10);
+      tone(660, "square", 0.15, 0, 0.15, now + 0.20);
+    },
+
+    // Timer tick — every second in final 10s
+    tick() {
+      const c = getCtx(); const now = c.currentTime;
+      tone(800, "square", 0.07, 0, 0.04, now);
+    },
+
+    // Urgent tick — final 5 seconds (higher, louder)
+    urgentTick() {
+      const c = getCtx(); const now = c.currentTime;
+      tone(1100, "square", 0.13, 0, 0.05, now);
+    },
+
+    // Sprint complete — satisfying ascending arpeggio + warm pad
+    complete() {
+      const c = getCtx(); const now = c.currentTime;
+      // Arpeggio: C E G C
+      [[262,0],[330,0.10],[392,0.20],[523,0.32]].forEach(([f,d]) => {
+        tone(f, "sine", 0.22, 0, 0.28, now + d);
+      });
+      // Warm chord underneath
+      tone(262, "triangle", 0.08, 0, 0.6, now + 0.32);
+      tone(330, "triangle", 0.06, 0, 0.6, now + 0.32);
+      tone(392, "triangle", 0.05, 0, 0.6, now + 0.32);
+      // Shimmer on top
+      glide(1046, 1200, "sine", 0.06, 0.4, now + 0.4);
+    },
+
+    // Pause/resume toggle
+    pause() {
+      glide(600, 300, "sine", 0.1, 0.08);
+    },
+    resume() {
+      glide(300, 600, "sine", 0.1, 0.08);
+    },
+
+    // Tab switch — subtle click
+    tab() {
+      tone(520, "sine", 0.08, 0, 0.06);
+    },
+
+    // New challenge shuffle
+    shuffle() {
+      const c = getCtx(); const now = c.currentTime;
+      [400,350,420].forEach((f,i) => tone(f,"sine",0.1,0,0.06,now+i*0.04));
+    },
+
+    // Quit sprint — descending
+    quit() {
+      glide(440, 220, "sine", 0.12, 0.15);
+    },
+  };
+})();
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+load();
+renderMoodGrid();
+renderIntGrid();
+updateStatusCard();
+updateStreakBadge();
+
+function renderMoodGrid() {
+  const g = document.getElementById("mood-grid");
+  g.innerHTML = MOODS.map(m => `
+    <div class="mood-card fu ${state.mood?.id===m.id?"selected":""}" id="mood-${m.id}" onclick="selectMood('${m.id}')" style="animation-delay:${MOODS.indexOf(m)*0.05}s;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;color:${state.mood?.id===m.id?"#8B5CF6":m.color};font-family:'Anton';line-height:1;min-width:22px;">${m.emoji}</span>
+        <div>
+          <div style="font-size:17px;letter-spacing:0.04em;color:${state.mood?.id===m.id?"#f0f0f4":"#0a0a0a"};line-height:1;">${m.label}</div>
+          <div style="font-family:'DM Sans';font-size:10px;color:${state.mood?.id===m.id?"#aaa":"#888"};margin-top:2px;">${m.sub}</div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderIntGrid() {
+  const g = document.getElementById("int-grid");
+  g.innerHTML = INTENSITIES.map(i => `
+    <div class="int-card ${state.intensity.id===i.id?"selected":""}" onclick="selectInt('${i.id}')">
+      <div style="font-size:16px;letter-spacing:0.04em;">${i.label}</div>
+      <div style="font-family:'DM Sans';font-size:10px;margin-top:3px;opacity:0.7;">${i.desc}</div>
+    </div>
+  `).join("");
+}
+
+function updateStatusCard() {
+  const done = state.lastDate === todayKey();
+  const card = document.getElementById("status-card");
+  const lbl = document.getElementById("status-label");
+  const msg = document.getElementById("status-msg");
+  const big = document.getElementById("streak-big");
+  if (done) {
+    card.style.background="#0a0a0a";
+    lbl.style.color="#8B5CF6"; lbl.textContent="✓ DONE FOR TODAY";
+    msg.style.color="#f0f0f4"; msg.textContent=`${state.streak} day streak`;
+    big.style.color="#8B5CF6";
+  } else {
+    card.style.background="#8B5CF6";
+    lbl.style.color="#0a0a0a"; lbl.textContent="DAILY CHECK-IN";
+    msg.style.color="#0a0a0a"; msg.textContent="What's going on?";
+    big.style.color="#0a0a0a";
+  }
+  big.textContent = state.streak;
+}
+
+function updateStreakBadge() {
+  const b = document.getElementById("streak-badge");
+  const n = document.getElementById("streak-num");
+  if (state.streak > 0) { b.style.display="flex"; n.textContent=state.streak; }
+  else { b.style.display="none"; }
+}
+
+function selectMood(id) {
+  SFX.moodSelect();
+  state.mood = MOODS.find(m=>m.id===id);
+  renderMoodGrid();
+  const btn = document.getElementById("go-btn");
+  btn.disabled = false;
+  btn.style.background="#8B5CF6"; btn.style.borderColor="#0a0a0a";
+  btn.textContent=`GET MY CHALLENGE →`;
+}
+
+function selectInt(id) {
+  SFX.intSelect();
+  state.intensity = INTENSITIES.find(i=>i.id===id);
+  renderIntGrid();
+}
+
+document.getElementById("go-btn").onclick = confirm;
+
+function confirm() {
+  if (!state.mood) return;
+  SFX.confirm();
+  const pool = LIBRARY[state.mood.id][state.intensity.id];
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  const reframe = LIBRARY[state.mood.id].reframe;
+  const mantra = LIBRARY[state.mood.id].mantra;
+  // Assign category
+  const catMap = {visual:["draw","sketch","visual","photo","design","colour"],writing:["write","letter","list","story","sentence","words","email","draft"],physical:["walk","move","stand","outside","exercise","body","stretch","breathe"],audio:["song","music","hum","sound","listen","playlist"]};
+  let cat = "thinking";
+  const cl = pick.challenge.toLowerCase();
+  for (const [c,kws] of Object.entries(catMap)) { if (kws.some(k=>cl.includes(k))) { cat=c; break; } }
+  state.result = { reframe, mantra, challenge:pick.challenge, why:pick.why, first:pick.first, category:cat };
+  showResult();
+}
+
+function newChallenge() { SFX.shuffle(); confirm(); }
+
+function showResult() {
+  hideAllScreens();
+  const r = state.result;
+  const m = state.mood;
+  const catColor = CAT_COLOR[r.category]||"#888";
+
+  document.getElementById("res-mood-badge").textContent=m.label;
+  document.getElementById("res-mood-badge").style.background=m.color;
+  document.getElementById("res-mood-badge").style.color="#fff";
+  document.getElementById("res-int-badge").textContent=`${state.intensity.label} · ${state.intensity.desc}`;
+  const cb = document.getElementById("res-cat-badge");
+  cb.textContent=`${CAT_ICON[r.category]||"◈"} ${r.category?.toUpperCase()}`;
+  cb.style.color=catColor; cb.style.borderColor=catColor; cb.style.background=catColor+"18";
+
+  document.getElementById("res-reframe").textContent=r.reframe;
+  document.getElementById("res-mantra").textContent=r.mantra;
+  document.getElementById("res-challenge-label").textContent=`${state.intensity.time/60}-MIN CHALLENGE`;
+  document.getElementById("res-challenge").textContent=r.challenge;
+
+  const fs = document.getElementById("res-firststep");
+  if (r.first) { fs.style.display="block"; fs.innerHTML=`<span style="font-family:'DM Sans';font-size:10px;font-weight:700;letter-spacing:0.12em;color:#555;">FIRST STEP → </span><span style="font-family:'DM Sans';font-size:13px;font-weight:600;color:#0a0a0a;">${r.first}</span>`; }
+  else fs.style.display="none";
+  document.getElementById("res-why").textContent=`Why this works: ${r.why}`;
+
+  document.getElementById("start-btn").onclick = startSprint;
+  const s = document.getElementById("screen-result");
+  s.style.display="flex";
+}
+
+function startSprint() {
+  SFX.sprintStart();
+  hideAllScreens();
+  state.timeLeft = state.intensity.time;
+  state.timerPaused = false;
+  document.getElementById("sprint-note").value="";
+  document.getElementById("sprint-challenge").textContent = state.result.challenge;
+  const sf = document.getElementById("sprint-firststep");
+  if (state.result.first) { sf.style.display="block"; sf.textContent=`→ ${state.result.first}`; }
+  else sf.style.display="none";
+  updateTimerDisplay();
+  state.timerInterval = setInterval(tickTimer, 1000);
+  document.getElementById("screen-sprint").style.display="flex";
+}
+
+function tickTimer() {
+  if (state.timerPaused) return;
+  state.timeLeft--;
+  updateTimerDisplay();
+  if (state.timeLeft > 0 && state.timeLeft <= 5) SFX.urgentTick();
+  else if (state.timeLeft > 0 && state.timeLeft <= 10) SFX.tick();
+  if (state.timeLeft <= 0) { clearInterval(state.timerInterval); completeSprint(); }
+}
+
+function updateTimerDisplay() {
+  const d = document.getElementById("timer-display");
+  const b = document.getElementById("timer-bar");
+  const total = state.intensity.time;
+  d.textContent = fmtTime(state.timeLeft);
+  d.style.color = state.timeLeft < 30 ? "#FF4D00" : "#8B5CF6";
+  d.style.animation = state.timeLeft < 30 ? "pop 1s infinite" : "none";
+  b.style.width = `${((total-state.timeLeft)/total)*100}%`;
+}
+
+function togglePause() {
+  state.timerPaused = !state.timerPaused;
+  state.timerPaused ? SFX.pause() : SFX.resume();
+  document.getElementById("pause-btn").textContent = state.timerPaused ? "RESUME" : "PAUSE";
+  document.getElementById("pause-btn").style.background = state.timerPaused ? "#8B5CF6" : "#FF4D00";
+}
+
+function quitSprint() { SFX.quit(); clearInterval(state.timerInterval); showPick(); }
+function finishEarly() { clearInterval(state.timerInterval); completeSprint(); }
+
+function completeSprint() {
+  const today = todayKey();
+  const newStreak = state.lastDate !== today ? state.streak+1 : state.streak;
+  state.streak = newStreak; state.lastDate = today; state.totalSprints++;
+  const note = document.getElementById("sprint-note").value.trim();
+  state.history.unshift({ date:today, time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}), mood:state.mood?.id, moodLabel:state.mood?.label, challenge:state.result?.challenge, category:state.result?.category, intensity:state.intensity?.id, note });
+  state.history = state.history.slice(0,50);
+  save(); updateStatusCard(); updateStreakBadge();
+  SFX.complete();
+  hideAllScreens();
+  document.getElementById("done-stats").textContent=`${state.streak} day streak 🔥 · ${state.totalSprints} total sprints`;
+  const nc = document.getElementById("done-note-card");
+  const nt = document.getElementById("done-note-text");
+  if (note) { nc.style.display="block"; nt.textContent=`"${note}"`; } else nc.style.display="none";
+  document.getElementById("screen-done").style.display="flex";
+}
+
+function resetToHome() { SFX.click(); hideAllScreens(); state.mood=null; state.result=null; renderMoodGrid(); document.getElementById("go-btn").disabled=true; document.getElementById("go-btn").style.background="#e5e0d8"; document.getElementById("go-btn").style.borderColor="#ccc"; document.getElementById("go-btn").textContent="PICK A STATE FIRST"; document.getElementById("screen-pick").style.display="block"; }
+function showPick() { SFX.click(); hideAllScreens(); document.getElementById("screen-pick").style.display="block"; }
+function hideAllScreens() { ["screen-pick","screen-result","screen-sprint","screen-done"].forEach(id=>{const el=document.getElementById(id);el.style.display="none";}); }
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function switchTab(t) {
+  SFX.tab();
+  ["home","log","stats"].forEach(tab=>{ document.getElementById(`tab-${tab}`).style.display=tab===t?"block":"none"; });
+  document.querySelectorAll(".tab").forEach(btn=>{ btn.classList.toggle("on", btn.dataset.tab===t); });
+  if (t==="log") renderLog();
+  if (t==="stats") renderStats();
+}
+
+document.querySelectorAll("[data-tab]").forEach(btn=>{ btn.addEventListener("click",()=>switchTab(btn.dataset.tab)); });
+
+function renderLog() {
+  const today = todayKey();
+  document.getElementById("log-subtitle").textContent=`${state.totalSprints} total sprints · ${state.streak} day streak`;
+  if (!state.history.length) {
+    document.getElementById("log-content").innerHTML=`<div style="border:2px dashed #ccc;padding:40px;text-align:center;"><div style="font-family:'DM Sans';font-size:13px;color:#aaa;">No sprints yet. Complete your first one and it'll show up here.</div></div>`;
+    return;
+  }
+  const grouped = state.history.reduce((a,h)=>{ (a[h.date]=a[h.date]||[]).push(h); return a; },{});
+  document.getElementById("log-content").innerHTML = Object.entries(grouped).map(([date,entries])=>{
+    const label = date===today?"TODAY":new Date(date+"T00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+    const rows = entries.map(e=>{
+      const mc = MOODS.find(m=>m.id===e.mood)?.color||"#888";
+      return `<div class="row" style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;">
+        <div style="min-width:42px;font-family:'DM Sans';font-size:10px;color:#aaa;padding-top:2px;">${e.time||""}</div>
+        <div style="flex:1;">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
+            <span style="font-family:'Anton';font-size:14px;color:${mc};">${e.moodLabel||""}</span>
+            ${e.intensity?`<span style="font-family:'DM Sans';font-size:10px;font-weight:700;color:#aaa;letter-spacing:0.1em;">${e.intensity.toUpperCase()}</span>`:""}
+            ${e.category?`<span style="font-family:'DM Sans';font-size:10px;font-weight:700;color:${CAT_COLOR[e.category]||"#888"};">${CAT_ICON[e.category]||""} ${e.category}</span>`:""}
+          </div>
+          ${e.challenge?`<div style="font-family:'DM Sans';font-size:12px;color:#555;line-height:1.5;${e.note?"margin-bottom:4px":""}">${e.challenge}</div>`:""}
+          ${e.note?`<div style="font-family:'DM Sans';font-size:11px;color:#0a0a0a;background:#fff;border:1px solid #e5e0d8;padding:6px 10px;line-height:1.5;font-style:italic;">"${e.note}"</div>`:""}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div style="margin-bottom:20px;">
+      <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:8px;border-bottom:1px solid #e5e0d8;padding-bottom:6px;">
+        ${label} <span style="margin-left:8px;background:#12121a;color:#8B5CF6;padding:1px 8px;font-size:10px;">${entries.length} sprint${entries.length>1?"s":""}</span>
+      </div>${rows}</div>`;
+  }).join("");
+}
+
+function renderStats() {
+  const today = todayKey();
+  const todayCount = state.history.filter(h=>h.date===today).length;
+
+  // Weekly data
+  const weekDays = Array.from({length:7},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(6-i)); return d.toISOString().slice(0,10); });
+  const weekData = weekDays.map(date=>({ date, count:state.history.filter(h=>h.date===date).length }));
+  const maxCount = Math.max(...weekData.map(d=>d.count),1);
+
+  // Mood breakdown
+  const moodCounts = MOODS.map(m=>({ ...m, count:state.history.filter(h=>h.mood===m.id).length })).filter(m=>m.count>0);
+  const total = state.history.length||1;
+
+  // Category breakdown
+  const catCounts = Object.entries(state.history.filter(h=>h.category).reduce((a,h)=>{ a[h.category]=(a[h.category]||0)+1; return a; },{})).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById("stats-content").innerHTML = `
+    <!-- Top 3 stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+      ${[["STREAK",state.streak,"days"],["TOTAL",state.totalSprints,"sprints"],["TODAY",todayCount,"done"]].map(([l,v,u])=>`
+        <div style="border:2.5px solid #0a0a0a;padding:14px 10px;background:#fff;text-align:center;">
+          <div style="font-size:38px;line-height:1;color:#0a0a0a;">${v}</div>
+          <div style="font-family:'DM Sans';font-size:10px;color:#888;letter-spacing:0.1em;margin-top:3px;">${u}</div>
+          <div style="font-family:'DM Sans';font-size:9px;color:#bbb;letter-spacing:0.12em;">${l}</div>
+        </div>`).join("")}
+    </div>
+
+    <!-- Weekly chart -->
+    <div style="border:2.5px solid #0a0a0a;padding:16px;background:#fff;margin-bottom:12px;">
+      <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:14px;">LAST 7 DAYS</div>
+      <div style="display:flex;gap:6px;align-items:flex-end;height:80px;">
+        ${weekData.map(d=>{
+          const h = d.count>0?Math.max(14,(d.count/maxCount)*70):3;
+          const isTd = d.date===today;
+          const dayLabel = DAY_LABELS[new Date(d.date+"T00:00").getDay()];
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:80px;justify-content:flex-end;">
+            <div style="font-family:'DM Sans';font-size:9px;color:${d.count>0?"#888":"#ccc"};">${d.count>0?d.count:""}</div>
+            <div style="width:100%;height:${h}px;background:${isTd?"#0a0a0a":d.count>0?"#8B5CF6":"#e5e0d8"};border:1.5px solid ${isTd?"#0a0a0a":d.count>0?"#0a0a0a":"#e0dbd3"};" ></div>
+            <div style="font-family:'DM Sans';font-size:9px;color:${isTd?"#0a0a0a":"#aaa"};font-weight:${isTd?700:400};">${dayLabel}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <!-- Mood breakdown -->
+    ${moodCounts.length?`
+    <div style="border:2.5px solid #0a0a0a;padding:16px;background:#fff;margin-bottom:12px;">
+      <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:14px;">MOOD BREAKDOWN</div>
+      ${moodCounts.map(m=>{
+        const pct=Math.round((m.count/total)*100);
+        return `<div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+            <span style="font-family:'Anton';font-size:12px;color:${m.color};letter-spacing:0.05em;">${m.label}</span>
+            <span style="font-family:'DM Sans';font-size:11px;color:#888;">${m.count}x · ${pct}%</span>
+          </div>
+          <div style="height:6px;background:#f0ece4;border:1px solid #e5e0d8;">
+            <div style="height:100%;width:${pct}%;background:${m.color};"></div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`:""}
+
+    <!-- Category breakdown -->
+    ${catCounts.length?`
+    <div style="border:2.5px solid #0a0a0a;padding:16px;background:#fff;">
+      <div style="font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:0.15em;color:#888;margin-bottom:12px;">CHALLENGE TYPES</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${catCounts.map(([cat,count])=>`
+          <div style="background:${CAT_COLOR[cat]||"#888"}18;border:2px solid ${CAT_COLOR[cat]||"#888"};padding:6px 12px;display:flex;gap:6px;align-items:center;">
+            <span style="font-size:13px;">${CAT_ICON[cat]||"◈"}</span>
+            <span style="font-family:'DM Sans';font-size:11px;font-weight:700;color:${CAT_COLOR[cat]||"#888"};letter-spacing:0.08em;">${cat.toUpperCase()}</span>
+            <span style="font-family:'DM Sans';font-size:11px;color:#888;">×${count}</span>
+          </div>`).join("")}
+      </div>
+    </div>`:""}
+
+    ${!state.history.length?`<div style="border:2px dashed #ccc;padding:40px;text-align:center;"><div style="font-family:'DM Sans';font-size:13px;color:#aaa;">Complete a sprint to see your stats here.</div></div>`:""}
+  `;
+}
+
+// ─── SERVICE WORKER ──────────────────────────────────────────────────────────
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
