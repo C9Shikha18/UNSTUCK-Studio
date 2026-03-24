@@ -94,7 +94,7 @@ Early version used an AI API. Removed it for v2 because:
 | Layer | Choice | Reason |
 |---|---|---|
 | Frontend | Vanilla HTML/CSS/JS | Zero dependencies, instant load, works offline |
-| Offline | Service Worker + Cache API | Full PWA — installs on home screen |
+| Offline | Service Worker + Cache API | Full PWA installs on home screen |
 | Storage | localStorage | No backend needed, private by default |
 | Sound | Web Audio API | Synthesized programmatically, no audio files to load |
 | Fonts | Google Fonts (Anton + DM Sans) | Cached after first load |
