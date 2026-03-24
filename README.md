@@ -2,7 +2,7 @@
 
 > **No affirmations. No fluff. Just a thing to actually do.**
 
-🔗 **Live App:** [C9Shikha18.github.io/unstuck](https://your-username.github.io/unstuck)
+🔗 **Live App:** [https://c9shikha18.github.io/UNSTUCK-Studio/](https://your-username.github.io/unstuck)
 📱 **Works offline** · Installable on Android & iPhone · No app store needed
 
 ---
